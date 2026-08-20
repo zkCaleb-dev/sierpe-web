@@ -1,5 +1,5 @@
 baseURL = 'https://sierpe.vercel.app/'
-languageCode = 'en-us'
+locale = 'en-us'
 title = 'Sierpe'
 disableKinds = ['taxonomy', 'term']
 

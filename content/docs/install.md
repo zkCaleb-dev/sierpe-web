@@ -78,10 +78,23 @@ Boot configuration comes from environment variables; everything else
 | `RPC_URLS` | mainnet | Comma-separated failover pool, in preference order; testnet defaults to the public SDF endpoint |
 | `HTTP_PORT` | no | API port, default 8080 |
 | `START_LEDGER` | no | First ledger for a fresh database (default: current tip) |
+| `HTTP_BASIC_AUTH` | no | `user:password`; when set, every request needs these credentials except `/health` and `/ready`. For public-domain deployments |
 | `STELLAR_CORE_BINARY` | no | Path to a stellar-core binary; enables the [archive leg](/docs/archive-leg/). Pre-set in the `-full` image |
 | `HISTORY_ARCHIVE_URLS` | no | History archives for the archive leg. Defaults to the SDF public archives |
 | `CAPTIVE_STORAGE_PATH` | no | Disposable scratch space for captive core buckets. Defaults to the OS temp dir |
 
 Secrets are redacted from all logs. Verify the deployment with
 `GET /health` and `GET /status`; `/ready` returns 503 while catching up —
-wire it to your platform's readiness probe.
+wire it to your platform's readiness probe. Then open `/` in a browser:
+the [embedded UI](/docs/management-ui/) covers the whole surface.
+
+## Exposing it safely
+
+The default shape is **private networking**: do not give the instance a
+public domain, and let your backend reach it over your platform's
+internal network (on Railway, `http://sierpe.railway.internal:8080`).
+Management surfaces do not face the internet — the same rule of thumb you
+apply to RabbitMQ or Postgres.
+
+If you do need a public domain, set `HTTP_BASIC_AUTH=user:password`, which
+gates everything except the orchestrator probes.

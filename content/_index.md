@@ -13,6 +13,7 @@ ranges no RPC serves anymore — and follows the tip.
 3. Sierpe discovers the contract's events from its on-chain spec
    and walks its history backwards, honestly declaring coverage
 4. GET /v1/contracts/C.../events?topic0=...&after=<cursor>
+   ...or just open / in a browser — the embedded UI covers it all
 ```
 
 It indexes **events**, **contract state**, **token transfers** and the

@@ -53,7 +53,8 @@ testnet resets, and would rather stop loudly than write a lie.
 ## What Sierpe is not
 
 - **Not a hosted service** — you run it. That's the point.
-- **Not an analytics platform** — no aggregations or dashboards over your data.
+- **Not an analytics platform** — the [embedded UI](/docs/management-ui/)
+  explores and operates; it does not aggregate or chart your data.
 - **Not a chain-wide indexer** — it indexes the contracts you register.
 - **Not a framework** — there is nothing to fork and no SDK to learn.
 

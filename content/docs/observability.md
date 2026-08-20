@@ -25,7 +25,7 @@ The headline signals:
 
 A ready-made dashboard ships in the repository at
 [deploy/grafana/sierpe-dashboard.json](https://github.com/zkCaleb-dev/sierpe/blob/main/deploy/grafana/sierpe-dashboard.json)
-— eight panels covering ingestion, backfill, API traffic and integrity.
+— eight panels covering the signals above.
 
 ## Status page
 

@@ -41,5 +41,6 @@ contract in the [quickstart](/docs/quickstart/).
 
 ## What's next
 
-v1.1 focuses on the archive leg — replaying History Archives for ranges
-below RPC retention — and structured SEP-41 token transfers.
+v1.1 focuses on structured SEP-41 token transfers and classic trustlines
+of SAC assets; v1.2 targets the archive leg — replaying History Archives
+for ranges below RPC retention.

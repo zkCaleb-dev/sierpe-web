@@ -10,35 +10,40 @@ own — Sierpe manages its own schema and migrations.
 
 ## Requirements
 
-- Postgres 14+ reachable via `DATABASE_URL` (Sierpe owns the schema; do
-  not point it at a database shared with another application).
+- An **empty Postgres database** reachable via `DATABASE_URL` — Sierpe
+  owns the schema and runs its own migrations; do not point it at a
+  database shared with another application. The bundled compose runs
+  Postgres 16.
 - Outbound HTTPS to public Stellar RPC endpoints.
-- Roughly 256 MB of memory to start; storage grows with the contracts you
-  register, not with the chain.
+- Storage grows with the contracts you register, not with the chain: a
+  typical project (a handful of contracts) fits Railway's smallest paid
+  tier.
 
 ## Docker Compose
 
 The repository ships a ready
-[docker-compose.yml](https://github.com/zkCaleb-dev/sierpe/blob/main/docker-compose.yml):
+[docker-compose.yml](https://github.com/zkCaleb-dev/sierpe/blob/main/docker-compose.yml)
+that wires Sierpe to its own Postgres 16 with a named volume:
 
 ```bash
 git clone https://github.com/zkCaleb-dev/sierpe
 cd sierpe
-NETWORK=testnet ADMIN_TOKEN=$(openssl rand -hex 32) docker compose up -d
+export POSTGRES_PASSWORD=$(openssl rand -hex 16)
+export ADMIN_TOKEN=$(openssl rand -hex 24)
+docker compose up -d
+curl localhost:8080/health
 ```
+
+Set `NETWORK=mainnet` and `RPC_URLS` for mainnet.
 
 ## Railway
 
-Create a project with a Postgres service and a service from the public
-image `ghcr.io/zkcaleb-dev/sierpe:v1.0.0`, then set:
-
-```text
-DATABASE_URL = ${{Postgres.DATABASE_URL}}
-NETWORK      = mainnet | testnet
-ADMIN_TOKEN  = <long random secret>
-```
-
-The container listens on port 8080.
+1. Create a project with a **Postgres** service.
+2. Add a service from the [GitHub repo](https://github.com/zkCaleb-dev/sierpe)
+   — Railway builds the Dockerfile.
+3. Set the variables: `DATABASE_URL` = `${{Postgres.DATABASE_URL}}`,
+   `NETWORK`, `ADMIN_TOKEN` (and `RPC_URLS` on mainnet).
+4. Expose the service; `/health` is the health check path.
 
 ## Any container platform
 
@@ -58,9 +63,11 @@ Boot configuration comes from environment variables; everything else
 | Variable | Required | Meaning |
 |---|---|---|
 | `DATABASE_URL` | yes | Postgres connection string; Sierpe owns this database |
-| `NETWORK` | yes | `mainnet` or `testnet` |
-| `ADMIN_TOKEN` | yes | Bearer token for the admin surface; entropy is enforced at boot |
-| `RPC_URLS` | no | Comma-separated failover pool; sensible public defaults per network |
+| `NETWORK` | yes | `testnet` or `mainnet` |
+| `ADMIN_TOKEN` | yes | Bearer token for the admin surface; minimum entropy enforced at boot |
+| `RPC_URLS` | mainnet | Comma-separated failover pool, in preference order; testnet defaults to the public SDF endpoint |
+| `HTTP_PORT` | no | API port, default 8080 |
+| `START_LEDGER` | no | First ledger for a fresh database (default: current tip) |
 
 Secrets are redacted from all logs. Verify the deployment with
 `GET /health` and `GET /status`; `/ready` returns 503 while catching up —

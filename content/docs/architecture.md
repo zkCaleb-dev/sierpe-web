@@ -21,7 +21,7 @@ source  →  ingest  →  process  →  store  →  serve
 ```
 
 - **Source** is a seam: the RPC pool today; captive-core / History
-  Archives (v1.1) plug in behind the same interface without touching the
+  Archives (v1.2) plug in behind the same interface without touching the
   rest.
 - **Ingest** is a single-writer loop. One writer means hash-chain
   continuity can be *verified*, not assumed.

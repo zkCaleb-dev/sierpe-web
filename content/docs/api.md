@@ -12,8 +12,7 @@ in the repository. This page is the map.
 
 | Method & path | Purpose |
 |---|---|
-| `POST /v1/contracts` | Register a contract; classification and backfill start automatically |
-| `GET /v1/contracts` | List registered contracts |
+| `POST /v1/contracts` | Register a contract (or reconcile an existing registration); classification and backfill start automatically |
 | `GET /v1/contracts/:id` | Detail: classification, discovered events, backfill progress, coverage |
 | `DELETE /v1/contracts/:id` | Stop indexing; data is kept, re-registration resumes |
 

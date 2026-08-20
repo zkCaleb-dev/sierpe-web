@@ -1,0 +1,28 @@
+{{ define "main" }}
+{{ if eq .Section "docs" }}
+<div class="cols">
+  <article>
+    <h1>{{ .Title }}</h1>
+    {{ .Content }}
+  </article>
+  <aside>
+    <div class="sidebox">
+      <h3>Documentation</h3>
+      <div class="pad">
+        <ul>
+          {{ range (where site.RegularPages "Section" "docs").ByWeight }}
+          <li>{{ if eq . $ }}<strong>{{ .Title }}</strong>{{ else }}<a href="{{ .RelPermalink }}">{{ .Title }}</a>{{ end }}</li>
+          {{ end }}
+        </ul>
+      </div>
+    </div>
+  </aside>
+</div>
+{{ else }}
+<article>
+  <h1>{{ .Title }}</h1>
+  {{ if eq .Section "news" }}<div class="date">{{ .Date.Format "January 2, 2006" }}</div>{{ end }}
+  {{ .Content }}
+</article>
+{{ end }}
+{{ end }}

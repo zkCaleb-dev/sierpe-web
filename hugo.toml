@@ -1,0 +1,36 @@
+baseURL = 'https://sierpe.vercel.app/'
+languageCode = 'en-us'
+title = 'Sierpe'
+disableKinds = ['taxonomy', 'term']
+
+[params]
+  description = 'A self-hosted Stellar indexer. Register a contract, get its complete history behind an honest REST API.'
+  github = 'https://github.com/zkCaleb-dev/sierpe'
+  version = 'v1.0.0'
+  image = 'ghcr.io/zkcaleb-dev/sierpe:v1.0.0'
+
+[menus]
+  [[menus.main]]
+    name = 'Home'
+    pageRef = '/'
+    weight = 10
+  [[menus.main]]
+    name = 'News'
+    pageRef = '/news'
+    weight = 20
+  [[menus.main]]
+    name = 'Docs'
+    pageRef = '/docs'
+    weight = 30
+  [[menus.main]]
+    name = 'Why Sierpe'
+    pageRef = '/why-sierpe'
+    weight = 40
+  [[menus.main]]
+    name = 'GitHub'
+    url = 'https://github.com/zkCaleb-dev/sierpe'
+    weight = 50
+
+[markup.highlight]
+  style = 'friendly'
+  noClasses = true

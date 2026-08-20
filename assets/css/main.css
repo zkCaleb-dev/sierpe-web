@@ -55,6 +55,11 @@ body {
   display: inline-block;
 }
 #topbar nav a:hover, #topbar nav a.active { background: var(--orange-dark); }
+@media (max-width: 640px) {
+  #topbar .wrap { flex-direction: column; align-items: flex-start; padding: 8px 16px; gap: 2px; }
+  #topbar nav { display: flex; flex-wrap: wrap; margin-left: -10px; }
+  #topbar nav a { padding: 6px 10px; }
+}
 
 /* ---- content ---- */
 main { padding: 24px 16px 48px; }
@@ -104,6 +109,7 @@ blockquote p { margin: 4px 0; }
   grid-template-columns: 1fr 280px;
   gap: 32px;
 }
+.cols > * { min-width: 0; }
 @media (max-width: 760px) {
   .cols { grid-template-columns: 1fr; }
 }

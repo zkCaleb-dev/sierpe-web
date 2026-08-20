@@ -18,7 +18,7 @@
       <p>{{ .Summary }}</p>
     </div>
     {{ end }}
-    <p><a href="/news/">Older news…</a></p>
+    <p><a href="/news/">Older news…</a> · <a href="/news/index.xml">RSS</a></p>
   </div>
 
   <aside>
@@ -42,6 +42,18 @@
           {{ range (where site.RegularPages "Section" "docs").ByWeight }}
           <li><a href="{{ .RelPermalink }}">{{ .Title }}</a></li>
           {{ end }}
+        </ul>
+      </div>
+    </div>
+
+    <div class="sidebox">
+      <h3>Community</h3>
+      <div class="pad">
+        <ul>
+          <li><a href="{{ site.Params.github }}/discussions">Questions &amp; ideas</a> — GitHub Discussions</li>
+          <li><a href="{{ site.Params.github }}/issues">Bug reports</a> — GitHub Issues</li>
+          <li><a href="https://discord.gg/stellardev">Stellar Dev Discord</a> — find us in #indexers</li>
+          <li><a href="{{ site.Params.github }}/blob/main/SECURITY.md">Security policy</a> — report vulnerabilities privately</li>
         </ul>
       </div>
     </div>

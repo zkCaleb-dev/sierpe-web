@@ -4,8 +4,8 @@ title: Home
 
 No forks, no custom code, no vendor. Configuration is data: register
 contracts at runtime through an authenticated API, and Sierpe classifies
-them, backfills their **full history** — including ranges no RPC serves
-anymore — and follows the tip.
+them, backfills their **full history** — replaying the public archives for
+ranges no RPC serves anymore — and follows the tip.
 
 ```text
 1. Deploy the container next to an empty Postgres
@@ -14,6 +14,10 @@ anymore — and follows the tip.
    and walks its history backwards, honestly declaring coverage
 4. GET /v1/contracts/C.../events?topic0=...&after=<cursor>
 ```
+
+It indexes **events**, **contract state**, **token transfers** and the
+**classic trustlines** of SAC assets — each with full history and a current
+snapshot where that makes sense.
 
 **Honest by construction.** Coverage and gaps are first-class data, declared
 in every API response. An empty page always tells you whether there is

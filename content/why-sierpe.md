@@ -23,9 +23,12 @@ codebase you adopt. If you have to write code to use it, that's a bug.
 ## What makes it different
 
 **History past the retention wall.** Registering a contract *today* gets
-you its complete past, not just its future. Sierpe backfills from genesis
-where sources allow, and is designed to replay History Archives for ranges
-no RPC serves at all.
+you its complete past, not just its future. Sierpe backfills as far as the
+RPC serves, records what it cannot reach as a declared gap, and — with the
+[archive leg](/docs/archive-leg/) enabled — heals those gaps by replaying
+the public history archives, but only after the replay proves itself
+byte-equivalent to your RPC. History below retention, or an honest gap.
+Never an unverified guess.
 
 **Honesty as an API contract.** Distributed ingestion loses data in
 silence; Sierpe refuses to. Every paginated response declares its
@@ -33,8 +36,9 @@ silence; Sierpe refuses to. Every paginated response declares its
 `WAITING_FOR_LEDGERS`, `OLDEST_REACHED`). Gaps are persisted, queryable
 and alertable — never papered over.
 
-**Contract state, not just events.** Storage entry change history with
-provenance, plus a current snapshot — the data most event indexers ignore.
+**More than events.** Storage entry change history with provenance plus a
+current snapshot, decoded SEP-41 token movements, and the classic
+trustlines of the asset a SAC wraps — data most event indexers ignore.
 
 **Forward-compatible by design.** The events API follows the semantics of
 the proposed `getEvents` v2 RPC endpoint (positional topic filters, opaque

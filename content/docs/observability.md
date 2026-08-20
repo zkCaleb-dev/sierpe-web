@@ -15,11 +15,20 @@ catalogue — and which ones deserve alerts — is in
 [docs/METRICS.md](https://github.com/zkCaleb-dev/sierpe/blob/main/docs/METRICS.md).
 The headline signals:
 
-- **Ingestion lag** — distance from the network tip.
-- **Open gaps** — ledger ranges Sierpe knows it is missing. A non-zero
-  value is the alert.
-- **Suppression counters** — anything skipped during extraction is
-  counted, never silently dropped.
+- **`sierpe_tip_lag_seconds`** — age of the last committed ledger against
+  wall clock. Sustained growth means falling behind.
+- **`sierpe_open_gaps`** — unresolved coverage gaps. Any nonzero value is
+  declared, unserved history.
+- **Suppression counters** — `sierpe_suppressed_txs_total`,
+  `_events_`, `_transfers_`, `_trustlines_`. Anything Sierpe could not
+  read is counted, never silently dropped. **Alert if nonzero**: that is
+  counted data loss.
+- **`sierpe_archive_equivalence_failures_total`** — the archive replay did
+  not match the RPC byte-for-byte, so healing is disabled. **Alert if
+  nonzero** ([why](/docs/archive-leg/)).
+- **Progress signals** — `sierpe_ledgers_ingested_total`,
+  `sierpe_backfill_pending`, `sierpe_gaps_healed_total`,
+  `sierpe_healed_ledgers_total`.
 
 ## Grafana
 

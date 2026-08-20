@@ -20,9 +20,10 @@ source  →  ingest  →  process  →  store  →  serve
                         state)
 ```
 
-- **Source** is a seam: the RPC pool today; captive-core / History
-  Archives (v1.2) plug in behind the same interface without touching the
-  rest.
+- **Source** is a seam: the RPC pool follows the tip, and a captive
+  stellar-core replay source serves bounded history-archive ranges behind
+  the same interface — that seam is what made [the archive
+  leg](/docs/archive-leg/) a drop-in addition rather than a rewrite.
 - **Ingest** is a single-writer loop. One writer means hash-chain
   continuity can be *verified*, not assumed.
 - **Store** owns its Postgres: embedded migrations under an advisory
@@ -36,7 +37,10 @@ Registration triggers a **descending** backfill: from the tip backwards
 in atomic 2000-ledger chunks, each with its own watermark. Newest data
 arrives first — usually what you want — and progress survives restarts
 exactly. At the RPC retention wall, the unserved range is persisted as a
-gap *before* the clamp commits, so nothing is ever silently missing.
+gap *before* the clamp commits, so nothing is ever silently missing. With
+the [archive leg](/docs/archive-leg/) enabled, those recorded gaps are
+later healed from the public archives — and the clamped frontier is
+lowered in the same transaction that lands the healed data.
 
 ## Design rules the code enforces
 

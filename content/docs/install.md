@@ -4,9 +4,19 @@ weight: 10
 description: Deploy the container on Railway, Docker Compose, or any platform that runs OCI images.
 ---
 
-Sierpe is distributed as a static, distroless container image and as
-release binaries. All it needs is an **empty Postgres database** it can
-own — Sierpe manages its own schema and migrations.
+Sierpe is distributed as a container image and as release binaries. All it
+needs is an **empty Postgres database** it can own — Sierpe manages its own
+schema and migrations.
+
+## Choosing an image
+
+| Tag | Contents |
+|---|---|
+| `ghcr.io/zkcaleb-dev/sierpe:v1.2.0` | Slim: static, distroless, multi-arch. Indexes from the RPC and clamps honestly at the retention wall |
+| `ghcr.io/zkcaleb-dev/sierpe:v1.2.0-full` | Slim plus `stellar-core`, to heal history below RPC retention. **linux/amd64 only** — see [the archive leg](/docs/archive-leg/) |
+
+Start with the slim image. Move to `-full` when you need history older
+than the roughly seven days an RPC serves.
 
 ## Requirements
 
@@ -68,6 +78,9 @@ Boot configuration comes from environment variables; everything else
 | `RPC_URLS` | mainnet | Comma-separated failover pool, in preference order; testnet defaults to the public SDF endpoint |
 | `HTTP_PORT` | no | API port, default 8080 |
 | `START_LEDGER` | no | First ledger for a fresh database (default: current tip) |
+| `STELLAR_CORE_BINARY` | no | Path to a stellar-core binary; enables the [archive leg](/docs/archive-leg/). Pre-set in the `-full` image |
+| `HISTORY_ARCHIVE_URLS` | no | History archives for the archive leg. Defaults to the SDF public archives |
+| `CAPTIVE_STORAGE_PATH` | no | Disposable scratch space for captive core buckets. Defaults to the OS temp dir |
 
 Secrets are redacted from all logs. Verify the deployment with
 `GET /health` and `GET /status`; `/ready` returns 503 while catching up —

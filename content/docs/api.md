@@ -23,6 +23,26 @@ in the repository. This page is the map.
 | `GET /v1/contracts/:id/events` | Events with getEvents-v2-style filters and cursors |
 | `GET /v1/contracts/:id/state` | Current storage snapshot, paginated by key + durability |
 | `GET /v1/contracts/:id/state/history` | Change history of storage entries, with provenance |
+| `GET /v1/contracts/:id/transfers` | Decoded token movements in chain order |
+| `GET /v1/contracts/:id/trustlines` | Current trustline holders of the SAC asset |
+| `GET /v1/contracts/:id/trustlines/history` | Trustline changes with before/after balances |
+
+### Token transfers
+
+SEP-41 movements (transfer, mint, burn, clawback) decoded into structured
+rows: `from`/`to` addresses, the exact i128 amount, the SEP-0011 asset and
+the CAP-67 muxed destination id. Filter by `account` (either side of the
+movement, exclusive with `from`/`to`), `from`, `to`, `type`, and a ledger
+range. SAC registrations derive transfers by default; custom SEP-41 tokens
+opt in through `kinds`.
+
+### Trustlines
+
+For a registered SAC, Sierpe attributes the classic trustline changes of
+the asset it wraps: live holders at `/trustlines`, and chain-order changes
+with before/after balances at `/trustlines/history`. Opt in through
+`kinds`. Native XLM has no trustlines, so the kind observes issued assets
+only.
 
 ## Operational surface
 

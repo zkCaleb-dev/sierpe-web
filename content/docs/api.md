@@ -20,6 +20,7 @@ in the repository. This page is the map.
 
 | Method & path | Purpose |
 |---|---|
+| `GET /v1/contracts` | List every registration with its classification and kinds |
 | `GET /v1/contracts/:id/events` | Events with getEvents-v2-style filters and cursors |
 | `GET /v1/contracts/:id/state` | Current storage snapshot, paginated by key + durability |
 | `GET /v1/contracts/:id/state/history` | Change history of storage entries, with provenance |
@@ -66,3 +67,15 @@ Every paginated response carries:
 
 Event ids follow the `getEvents` format: `{toid}-{event_index}`,
 zero-padded, stable across replays.
+
+## Access model
+
+Reads are open; admin mutations require the `ADMIN_TOKEN` bearer. That
+suits the default deployment shape — private networking, where nothing
+outside your platform's internal network reaches the instance.
+
+If you do expose a public domain, set `HTTP_BASIC_AUTH=user:password` and
+**every** request needs those credentials — the UI, the API and
+`/metrics` — leaving only `/health` and `/ready` open for orchestrator
+probes. Browsers prompt natively; clients send the standard header
+(`curl -u user:password …`). Admin mutations still need the bearer on top.

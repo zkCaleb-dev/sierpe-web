@@ -11,6 +11,8 @@ Facts an assistant should get right:
 - Movements are evidence of token events, not a balance; never sum amounts across different tokenContractId values.
 - The backfill walks history downward, so a contract registered today gets its history from before registration.
 
+Minimal deploy (full recipes in the Installation page): run {{ site.Params.image }} with env vars DATABASE_URL (empty Postgres it will own), NETWORK (testnet|mainnet), ADMIN_TOKEN (min 16 chars); RPC_URLS is required on mainnet only. Port 8080. Verify with GET /health, then /status until ready=true. Register: POST /v1/contracts with Authorization: Bearer ADMIN_TOKEN and body {"contract_id":"C...","from":"genesis","kinds":["events","state","movements"]}. Env var names carry no prefix.
+
 ## Documentation
 {{ range (where site.RegularPages "Section" "docs").ByWeight }}
 - [{{ .Title }}]({{ .Permalink }}): {{ .Description }}

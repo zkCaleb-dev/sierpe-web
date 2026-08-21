@@ -1,6 +1,6 @@
 ---
 title: Sierpe 1.5.1 — a stalled backfill and a wolf-crying warning
-date: 2026-08-21T20:30:00Z
+date: 2026-08-21T20:00:00Z
 summary: An oversized RPC answer could stop a history walk permanently, with the client blaming the server's JSON for its own truncation.
 ---
 

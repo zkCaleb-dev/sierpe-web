@@ -31,13 +31,47 @@ than the roughly seven days an RPC serves.
 
 ## Docker Compose
 
-The repository ships a ready
-[docker-compose.yml](https://github.com/zkCaleb-dev/sierpe/blob/main/docker-compose.yml)
-that wires Sierpe to its own Postgres 16 with a named volume:
+This is the complete file — save it as `docker-compose.yml`, nothing else
+is needed (it matches the one
+[in the repository](https://github.com/zkCaleb-dev/sierpe/blob/main/docker-compose.yml)):
+
+```yaml
+services:
+  sierpe:
+    image: ghcr.io/zkcaleb-dev/sierpe:v1.5.1
+    # image: ghcr.io/zkcaleb-dev/sierpe:v1.5.1-full   # archive leg: heals history below RPC retention (amd64)
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://sierpe:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@db:5432/sierpe?sslmode=disable
+      NETWORK: ${NETWORK:-testnet}
+      ADMIN_TOKEN: ${ADMIN_TOKEN:?set ADMIN_TOKEN (min 16 chars)}
+      # RPC_URLS: https://your-rpc-1,https://your-rpc-2   # required on mainnet
+    ports:
+      - "8080:8080"
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: sierpe
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: sierpe
+    volumes:
+      - sierpe-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sierpe -d sierpe"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+volumes:
+  sierpe-pgdata:
+```
 
 ```bash
-git clone https://github.com/zkCaleb-dev/sierpe
-cd sierpe
 export POSTGRES_PASSWORD=$(openssl rand -hex 16)
 export ADMIN_TOKEN=$(openssl rand -hex 24)
 docker compose up -d
@@ -87,6 +121,20 @@ Secrets are redacted from all logs. Verify the deployment with
 `GET /health` and `GET /status`; `/ready` returns 503 while catching up —
 wire it to your platform's readiness probe. Then open `/` in a browser:
 the [embedded UI](/docs/management-ui/) covers the whole surface.
+
+## First-run troubleshooting
+
+Every one of these was hit by a real first deployment; the fixes are
+exact.
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| Boot error naming `DATABASE_URL`, `NETWORK` or `ADMIN_TOKEN` | Variables are unprefixed — `SIERPE_DATABASE_URL` is not read | Use the exact names from the table above |
+| `/ready` returns 503, `/health` returns 200 | Normal while catching up to the tip | Wait; watch `/status` — `ready` flips when the cursor reaches the tip |
+| `401` on `POST /v1/contracts` | Missing bearer, or `HTTP_BASIC_AUTH` is set and the client sent only one credential | Send `Authorization: Bearer $ADMIN_TOKEN`; with Basic Auth enabled the admin token is also accepted as the Basic password |
+| `404 contract does not exist` on registration | Contract not found on the configured network — wrong `NETWORK`, a typo, or an asset whose SAC was never deployed | Check the id on that network; deploy the SAC first for classic assets |
+| A fresh database starts at the tip, not in the past | By design — history arrives via each contract's backfill, not by replaying the whole chain | Register contracts with `"from"`; use `START_LEDGER` only when you need the live cursor itself to begin earlier |
+| Right after registering, coverage shows `indexedFromLedger` above `indexedToLedger` | An intentionally empty window: the backfill anchors slightly past the live cursor | It closes on its own within a minute; not an error |
 
 ## Exposing it safely
 

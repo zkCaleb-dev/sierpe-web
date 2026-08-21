@@ -12,8 +12,8 @@ schema and migrations.
 
 | Tag | Contents |
 |---|---|
-| `ghcr.io/zkcaleb-dev/sierpe:v1.2.0` | Slim: static, distroless, multi-arch. Indexes from the RPC and clamps honestly at the retention wall |
-| `ghcr.io/zkcaleb-dev/sierpe:v1.2.0-full` | Slim plus `stellar-core`, to heal history below RPC retention. **linux/amd64 only** — see [the archive leg](/docs/archive-leg/) |
+| `ghcr.io/zkcaleb-dev/sierpe:v1.5.1` | Slim: static, distroless, multi-arch. Indexes from the RPC and clamps honestly at the retention wall |
+| `ghcr.io/zkcaleb-dev/sierpe:v1.5.1-full` | Slim plus `stellar-core`, to heal history below RPC retention. **linux/amd64 only** — see [the archive leg](/docs/archive-leg/) |
 
 Start with the slim image. Move to `-full` when you need history older
 than the roughly seven days an RPC serves.
@@ -62,7 +62,7 @@ docker run -d -p 8080:8080 \
   -e DATABASE_URL=postgres://user:pass@host:5432/sierpe \
   -e NETWORK=testnet \
   -e ADMIN_TOKEN=$(openssl rand -hex 32) \
-  ghcr.io/zkcaleb-dev/sierpe:v1.0.0
+  ghcr.io/zkcaleb-dev/sierpe:v1.5.1
 ```
 
 ## Configuration

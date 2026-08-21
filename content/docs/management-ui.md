@@ -17,7 +17,7 @@ same surface the REST API does.
   verdict, open gaps.
 - **The contract list** — every registration with its classification,
   kinds, declared coverage and counts.
-- **A data explorer** — a tab per kind: events, transfers, state and its
+- **A data explorer** — a tab per kind: events, transfers, movements, state and its
   history, trustlines and theirs. Filters and cursor pagination included,
   so you page through real data instead of composing curl calls.
 - **Registration and unregistration** — behind an admin-token field that

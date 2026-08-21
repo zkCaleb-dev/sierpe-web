@@ -1,0 +1,17 @@
+# Sierpe — complete documentation
+# {{ site.Params.description }}
+# Release {{ site.Params.version }} ({{ site.Params.released }}) · image {{ site.Params.image }}
+# Authoritative API contract: https://raw.githubusercontent.com/zkCaleb-dev/sierpe/main/docs/openapi.yaml
+{{ range (where site.RegularPages "Section" "docs").ByWeight }}
+---
+
+# {{ .Title }}
+{{ with .Description }}> {{ . }}{{ end }}
+
+{{ .RawContent }}
+{{- end }}
+---
+
+# Why Sierpe
+
+{{ with site.GetPage "/why-sierpe" }}{{ .RawContent }}{{ end }}

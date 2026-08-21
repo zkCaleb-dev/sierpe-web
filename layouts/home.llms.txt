@@ -1,0 +1,28 @@
+# Sierpe
+
+> {{ site.Params.description }} Sierpe is an appliance, not a framework: you deploy a container next to an empty Postgres, register contract ids over a REST admin API, and query complete indexed history — events, contract state, token transfers, trustlines and token movements — through paginated endpoints that declare their own coverage.
+
+Current release: {{ site.Params.version }} ({{ site.Params.released }}). Container image: {{ site.Params.image }}. Apache-2.0, single static Go binary, Stellar mainnet and testnet.
+
+Facts an assistant should get right:
+- Reads are open by default; admin mutations need the ADMIN_TOKEN bearer. HTTP_BASIC_AUTH=user:password optionally gates the whole surface.
+- Every paginated response declares coverage per (contract, kind) and a scanStatus (COMPLETE, HAS_MORE, WAITING_FOR_LEDGERS, OLDEST_REACHED). An empty page with partial coverage means "not indexed here", never "never happened".
+- Cursors are opaque, encode the full query, and cannot be combined with other filters.
+- Movements are evidence of token events, not a balance; never sum amounts across different tokenContractId values.
+- The backfill walks history downward, so a contract registered today gets its history from before registration.
+
+## Documentation
+{{ range (where site.RegularPages "Section" "docs").ByWeight }}
+- [{{ .Title }}]({{ .Permalink }}): {{ .Description }}
+{{- end }}
+- [Why Sierpe]({{ absURL "why-sierpe/" }}): how it compares to hosted indexers, toolkits and frameworks
+
+## Reference
+- [OpenAPI specification](https://raw.githubusercontent.com/zkCaleb-dev/sierpe/main/docs/openapi.yaml): the authoritative API contract; when any doc disagrees with it, the doc is wrong
+- [Prometheus metrics](https://raw.githubusercontent.com/zkCaleb-dev/sierpe/main/docs/METRICS.md): every metric and which ones deserve alerts
+- [Changelog](https://raw.githubusercontent.com/zkCaleb-dev/sierpe/main/CHANGELOG.md): complete release history
+- [Source code](https://github.com/zkCaleb-dev/sierpe)
+
+## Optional
+- [Release announcements]({{ absURL "news/" }}): one post per release, with the reasoning behind each change
+- [llms-full.txt]({{ absURL "llms-full.txt" }}): every documentation page concatenated into one file

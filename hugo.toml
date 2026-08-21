@@ -1,4 +1,4 @@
-baseURL = 'https://sierpe.vercel.app/'
+baseURL = 'https://sierpe-web.vercel.app/'
 locale = 'en-us'
 title = 'Sierpe'
 disableKinds = ['taxonomy', 'term']
@@ -7,6 +7,7 @@ disableKinds = ['taxonomy', 'term']
   description = 'A self-hosted Stellar indexer. Register a contract, get its complete history behind an honest REST API.'
   github = 'https://github.com/zkCaleb-dev/sierpe'
   version = 'v1.5.1'
+  released = '2026-08-21'
   image = 'ghcr.io/zkcaleb-dev/sierpe:v1.5.1'
 
 [menus]
@@ -30,6 +31,22 @@ disableKinds = ['taxonomy', 'term']
     name = 'GitHub'
     url = 'https://github.com/zkCaleb-dev/sierpe'
     weight = 50
+
+# Machine-readable docs for AI assistants (llmstxt.org): /llms.txt is the
+# index, /llms-full.txt concatenates every docs page from the SAME source
+# files the human pages render from, so it can never drift.
+[outputFormats.llms]
+  mediaType = 'text/plain'
+  baseName = 'llms'
+  isPlainText = true
+
+[outputFormats.llmsfull]
+  mediaType = 'text/plain'
+  baseName = 'llms-full'
+  isPlainText = true
+
+[outputs]
+  home = ['html', 'rss', 'llms', 'llmsfull']
 
 [markup.highlight]
   style = 'friendly'

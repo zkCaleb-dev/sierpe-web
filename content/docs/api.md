@@ -27,6 +27,7 @@ in the repository. This page is the map.
 | `GET /v1/contracts/:id/transfers` | Decoded token movements in chain order |
 | `GET /v1/contracts/:id/trustlines` | Current trustline holders of the SAC asset |
 | `GET /v1/contracts/:id/trustlines/history` | Trustline changes with before/after balances |
+| `GET /v1/contracts/:id/movements` | Token transfers this contract took part in, whoever emitted them |
 
 ### Token transfers
 
@@ -45,6 +46,26 @@ with before/after balances at `/trustlines/history`. Opt in through
 `kinds`. Native XLM has no trustlines, so the kind observes issued assets
 only.
 
+### Movements
+
+Transfers answer "what did this token emit". Movements answer the other
+question — **"what came into and went out of my contract"** — and they are
+different questions: a payment to your contract is emitted by the asset's
+own SAC, not by your contract. Register the `movements` kind and every
+token transfer naming your contract as sender or recipient lands here,
+without registering the asset's SAC at all. Filter by `role`, `token`
+(the emitting contract id — the asset's real identity, never its SEP-0011
+string), `type` and a ledger range.
+
+Because ingestion downloads whole ledgers, the descending backfill derives
+movement history from **before** the contract was registered — the thing
+dynamic-source indexers cannot do.
+
+One honest caveat, stated by the API itself in a `note` field: movements
+are **not a balance**. Value can also arrive without any SEP-41 transfer
+event, and amounts are raw base units of different tokens — never sum
+across `tokenContractId`.
+
 ## Operational surface
 
 | Path | Purpose |
@@ -59,7 +80,10 @@ only.
 Every paginated response carries:
 
 - **`coverage`** — the ledger ranges this instance can actually answer
-  for, derived from backfill progress and the live cursor.
+  for, derived from backfill progress and the live cursor. Since 1.5.0
+  coverage is declared **per (contract, kind)**: a walk only vouches for
+  the kinds it actually derived, and a kind added later reopens the walk
+  instead of silently claiming history it never looked at.
 - **`scanStatus`** — `COMPLETE`, `HAS_MORE`, `WAITING_FOR_LEDGERS` or
   `OLDEST_REACHED`.
 - **`cursor`** — opaque, encodes the full query. Cursors are bound to

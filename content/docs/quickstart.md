@@ -15,6 +15,7 @@ descending backfill while following the tip:
 ```bash
 curl -X POST localhost:8080/v1/contracts \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
   -d '{"contract_id": "CBMLLYBH...", "from": "genesis",
        "kinds": ["events", "state", "movements"]}'
 ```

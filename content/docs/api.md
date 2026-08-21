@@ -53,9 +53,19 @@ question — **"what came into and went out of my contract"** — and they are
 different questions: a payment to your contract is emitted by the asset's
 own SAC, not by your contract. Register the `movements` kind and every
 token transfer naming your contract as sender or recipient lands here,
-without registering the asset's SAC at all. Filter by `role`, `token`
-(the emitting contract id — the asset's real identity, never its SEP-0011
-string), `type` and a ledger range.
+without registering the asset's SAC at all.
+
+Query parameters: `role` (`recipient` | `sender`; omit for both),
+`token` (the emitting contract id — the asset's real identity, never its
+SEP-0011 string), `type` (`transfer` | `mint` | `burn` | `clawback`),
+`startLedger`, `endLedger`, `limit` (1–1000, default 100) and `cursor`.
+"Deposits" in the everyday sense are `role=recipient` — that includes
+mints to the contract, since a mint is value arriving too.
+
+Each row: `id` (shared by the two rows of a self-transfer — key on `id` + `role`), `role`, `transferType`, `tokenContractId`,
+`counterparty` (absent on mints and burns), `amount` (exact i128 in raw
+token units, as a string), `ledger`, `ledgerClosedAt`. The page carries
+the usual `cursor`, `scanStatus`, `coverage` and a `note`.
 
 Because ingestion downloads whole ledgers, the descending backfill derives
 movement history from **before** the contract was registered — the thing

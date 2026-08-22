@@ -12,8 +12,8 @@ schema and migrations.
 
 | Tag | Contents |
 |---|---|
-| `ghcr.io/zkcaleb-dev/sierpe:v1.5.1` | Slim: static, distroless, multi-arch. Indexes from the RPC and clamps honestly at the retention wall |
-| `ghcr.io/zkcaleb-dev/sierpe:v1.5.1-full` | Slim plus `stellar-core`, to heal history below RPC retention. **linux/amd64 only** — see [the archive leg](/docs/archive-leg/) |
+| `ghcr.io/zkcaleb-dev/sierpe:v1.5.2` | Slim: static, distroless, multi-arch. Indexes from the RPC and clamps honestly at the retention wall |
+| `ghcr.io/zkcaleb-dev/sierpe:v1.5.2-full` | Slim plus `stellar-core`, to heal history below RPC retention. **linux/amd64 only** — see [the archive leg](/docs/archive-leg/) |
 
 Start with the slim image. Move to `-full` when you need history older
 than the roughly seven days an RPC serves.
@@ -38,8 +38,8 @@ is needed (it matches the one
 ```yaml
 services:
   sierpe:
-    image: ghcr.io/zkcaleb-dev/sierpe:v1.5.1
-    # image: ghcr.io/zkcaleb-dev/sierpe:v1.5.1-full   # archive leg: heals history below RPC retention (amd64)
+    image: ghcr.io/zkcaleb-dev/sierpe:v1.5.2
+    # image: ghcr.io/zkcaleb-dev/sierpe:v1.5.2-full   # archive leg: heals history below RPC retention (amd64)
     restart: unless-stopped
     depends_on:
       db:
@@ -87,7 +87,7 @@ The image route — no GitHub account or build step needed:
 1. **New Project → Deploy PostgreSQL.** A fresh Railway Postgres is
    empty, which is what Sierpe needs; do not reuse a database another app
    owns. Note the service name on the card (default `Postgres`).
-2. **+ New → Docker Image**, type `ghcr.io/zkcaleb-dev/sierpe:v1.5.1`.
+2. **+ New → Docker Image**, type `ghcr.io/zkcaleb-dev/sierpe:v1.5.2`.
    The first deploy fails until the variables exist — expected.
 3. **Variables** tab of the new service:
    - `DATABASE_URL` = `${{Postgres.DATABASE_URL}}` — the reference works
@@ -101,7 +101,9 @@ The image route — no GitHub account or build step needed:
    which returns 503 while catching up and would fail the deploy.
 5. **Settings → Networking → Generate Domain**, and when asked for the
    port, answer **`8080`**. Sierpe listens on its own `HTTP_PORT`
-   (default 8080) and ignores Railway's injected `PORT`. Private
+   (default 8080) and deliberately ignores the `PORT` Railway injects —
+   honouring it would silently move the listener of every deployment
+   that did not pin `HTTP_PORT`. Private
    networking stays on by default: other services in the project reach
    it at `http://sierpe.railway.internal:8080`.
 6. Deploy, then open `https://YOUR-APP.up.railway.app/status`. A fresh
@@ -128,7 +130,7 @@ nothing public.
   the image carries the public root CAs (it talks HTTPS to the RPC) but
   not Amazon's RDS CA, so full verification would fail. This applies to
   every managed Postgres with a private CA (RDS, Supabase, Neon…).
-- **Task definition**: image `ghcr.io/zkcaleb-dev/sierpe:v1.5.1`,
+- **Task definition**: image `ghcr.io/zkcaleb-dev/sierpe:v1.5.2`,
   container port `8080`, `NETWORK` as plain environment, `DATABASE_URL`
   and `ADMIN_TOKEN` as ECS `secrets` from Secrets Manager. 0.5 vCPU /
   1 GiB is a sound start (see sizing below). No volume, no EFS. Use the
@@ -154,7 +156,7 @@ docker run -d -p 8080:8080 \
   -e DATABASE_URL=postgres://user:pass@host:5432/sierpe \
   -e NETWORK=testnet \
   -e ADMIN_TOKEN=$(openssl rand -hex 32) \
-  ghcr.io/zkcaleb-dev/sierpe:v1.5.1
+  ghcr.io/zkcaleb-dev/sierpe:v1.5.2
 ```
 
 ## Operating it on any cloud — the facts that matter
@@ -175,16 +177,22 @@ from the code rather than guessed.
   5 seconds and the loop stops between commits. First boot runs the
   embedded migrations in well under a minute.
 - **Database connections**: pgx defaults — at most `max(4, CPUs)`
-  pooled connections. A `db.t4g.micro` or Railway's Postgres is fine.
+  pooled connections; `pool_max_conns=2` in the URL lowers it for tiny
+  plans. PostgreSQL **14 or newer** (the driver's floor); 16 or 17 for a
+  new install. Behind a transaction-mode pooler without prepared-statement
+  support, append `default_query_exec_mode=simple_protocol` — Sierpe
+  names that fix in its last log line when it dies that way.
 - **Memory**: the slim image idles at tens of MB. The ceiling is the
   backfill, which buffers RPC responses of up to 64 MB each and shrinks
   its batch when the network is busier than that; plan 512 MB, and
   1 GiB if you register many contracts at once.
 - **TLS to Postgres**: `sslmode=require` for any managed provider with a
-  private CA; `disable` only for a Postgres on the same private network
-  that you control; `verify-full` only if you can mount the provider's
-  CA bundle (the image is distroless — building a derived image is the
-  way).
+  private CA (RDS, Cloud SQL, Supabase…); `verify-full` as-is where the
+  certificate chains to public roots (Azure Flexible Server, Neon,
+  PlanetScale); `disable` only for a Postgres on a private network you
+  control. For `verify-full` against a private CA, mount the provider's
+  CA file into the container and add `sslrootcert=/path/to/ca.pem` to
+  the URL — the driver honours it, no derived image needed.
 - **Testnet resets**: when the network is reset (the tip jumps back by
   millions of ledgers), the loop detects it and **stops with zero
   writes** rather than mixing two chains. Recovery is deliberate and
@@ -196,6 +204,15 @@ from the code rather than guessed.
   RPC, so `RPC_URLS` is required there.
 - **Behind a proxy**: TLS termination in front is fine. Path prefixes
   are not — the embedded UI and the API assume they live at `/`.
+- **Health checks inside the container**: the image declares
+  `HEALTHCHECK CMD ["/sierpe", "healthcheck"]` (since 1.5.2), so Docker,
+  Swarm and the self-hosted PaaS family get a health signal despite the
+  distroless base. Kubernetes and cloud load balancers ignore it and
+  probe `/health` over the network, which is equally fine.
+- **The `-full` image runs as root** today (its stellar-core base has no
+  unprivileged user). Clusters enforcing the restricted Pod Security
+  profile will reject it; the slim image runs as UID 65532 and passes.
+  See [Where it runs](/docs/platforms/) for the per-platform picture.
 
 ## Configuration
 

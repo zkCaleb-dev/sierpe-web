@@ -162,12 +162,15 @@ docker run -d -p 8080:8080 \
 Answers to what an operator (or their assistant) has to decide, stated
 from the code rather than guessed.
 
-- **Run exactly one instance per database.** Ingestion is a single
-  writer with no leader election. A second instance does not corrupt
-  anything — its first commit trips the hash-continuity guard and the
-  process exits loudly — but you get a crash loop, not high availability.
-  Restarts are safe at any moment: the cursor and the data commit in one
-  transaction, so a killed task resumes exactly where it stopped.
+- **Run one instance per database in steady state.** There is no
+  leader election. A second instance is harmless to the data — the
+  cursor only ever moves forward and every insert is idempotent — but
+  it is pure waste: each copy ingests every ledger (double RPC load)
+  and two backfill workers re-walk each other's chunks. A brief overlap
+  during a rolling deploy is fine; two replicas as a steady state is
+  not high availability, just double the work. Restarts are safe at any
+  moment: the cursor and the data commit in one transaction, so a killed
+  task resumes exactly where it stopped.
 - **Shutdown**: `SIGTERM` is handled; the HTTP server drains for up to
   5 seconds and the loop stops between commits. First boot runs the
   embedded migrations in well under a minute.

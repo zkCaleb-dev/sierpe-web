@@ -1,16 +1,38 @@
 {{ define "main" }}
 {{ if eq .Section "docs" }}
+{{ $docs := (where site.RegularPages "Section" "docs").ByWeight }}
+{{ $prev := "" }}{{ $next := "" }}
+{{ range $i, $p := $docs }}
+  {{ if eq $p $ }}
+    {{ if gt $i 0 }}{{ $prev = index $docs (sub $i 1) }}{{ end }}
+    {{ if lt (add $i 1) (len $docs) }}{{ $next = index $docs (add $i 1) }}{{ end }}
+  {{ end }}
+{{ end }}
 <div class="cols">
-  <article>
+  <article class="prose">
     <h1>{{ .Title }}</h1>
     {{ .Content }}
+    {{ if or $prev $next }}
+    <nav class="pager" aria-label="Documentation pages">
+      {{ with $prev }}<a class="prev" href="{{ .RelPermalink }}"><span>Previous</span>← {{ .Title }}</a>{{ end }}
+      {{ with $next }}<a class="next" href="{{ .RelPermalink }}"><span>Next</span>{{ .Title }} →</a>{{ end }}
+    </nav>
+    {{ end }}
   </article>
   <aside>
+    {{ with .TableOfContents }}
+    {{ if gt (len (findRE "<li" .)) 1 }}
+    <div class="sidebox toc">
+      <h3>On this page</h3>
+      <div class="pad">{{ . }}</div>
+    </div>
+    {{ end }}
+    {{ end }}
     <div class="sidebox">
       <h3>Documentation</h3>
       <div class="pad">
         <ul>
-          {{ range (where site.RegularPages "Section" "docs").ByWeight }}
+          {{ range $docs }}
           <li>{{ if eq . $ }}<strong>{{ .Title }}</strong>{{ else }}<a href="{{ .RelPermalink }}">{{ .Title }}</a>{{ end }}</li>
           {{ end }}
         </ul>
@@ -19,7 +41,7 @@
   </aside>
 </div>
 {{ else }}
-<article>
+<article class="prose">
   <h1>{{ .Title }}</h1>
   {{ if eq .Section "news" }}<div class="date">{{ .Date.Format "January 2, 2006" }}</div>{{ end }}
   {{ .Content }}

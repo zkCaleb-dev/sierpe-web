@@ -82,7 +82,16 @@ Set `NETWORK=mainnet` and `RPC_URLS` for mainnet.
 
 ## Railway
 
-The image route — no GitHub account or build step needed:
+**One click**: [Deploy on Railway](https://railway.com/deploy/pk6tCs?referralCode=tuEgvN)
+creates the Postgres and the Sierpe service already wired together, with
+`ADMIN_TOKEN` and the Basic Auth password generated for your instance.
+Open the generated domain, sign in with the `HTTP_BASIC_AUTH` value from
+the Variables tab, paste `ADMIN_TOKEN` into the UI's admin box, register
+your first contract. Every variable in the template carries a
+description of what it does.
+
+The manual route, if you prefer to assemble it yourself — no GitHub
+account or build step needed:
 
 1. **New Project → Deploy PostgreSQL.** A fresh Railway Postgres is
    empty, which is what Sierpe needs; do not reuse a database another app

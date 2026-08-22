@@ -1,4 +1,5 @@
 {{ define "main" }}
+<div class="prose">
 <h1>{{ .Title }}</h1>
 {{ .Content }}
 {{ if eq .Section "news" }}
@@ -17,4 +18,5 @@
   {{ end }}
   </div>
 {{ end }}
+</div>
 {{ end }}

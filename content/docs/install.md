@@ -82,7 +82,7 @@ Set `NETWORK=mainnet` and `RPC_URLS` for mainnet.
 
 ## Railway
 
-**One click**: [Deploy on Railway](https://railway.com/deploy/pk6tCs?referralCode=tuEgvN)
+**One click**: [Deploy on Railway](https://railway.com/deploy/sierpe?referralCode=tuEgvN)
 creates the Postgres and the Sierpe service already wired together, with
 `ADMIN_TOKEN` and the Basic Auth password generated for your instance.
 Open the generated domain, sign in with the `HTTP_BASIC_AUTH` value from

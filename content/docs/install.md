@@ -82,12 +82,70 @@ Set `NETWORK=mainnet` and `RPC_URLS` for mainnet.
 
 ## Railway
 
-1. Create a project with a **Postgres** service.
-2. Add a service from the [GitHub repo](https://github.com/zkCaleb-dev/sierpe)
-   — Railway builds the Dockerfile.
-3. Set the variables: `DATABASE_URL` = `${{Postgres.DATABASE_URL}}`,
-   `NETWORK`, `ADMIN_TOKEN` (and `RPC_URLS` on mainnet).
-4. Expose the service; `/health` is the health check path.
+The image route — no GitHub account or build step needed:
+
+1. **New Project → Deploy PostgreSQL.** A fresh Railway Postgres is
+   empty, which is what Sierpe needs; do not reuse a database another app
+   owns. Note the service name on the card (default `Postgres`).
+2. **+ New → Docker Image**, type `ghcr.io/zkcaleb-dev/sierpe:v1.5.1`.
+   The first deploy fails until the variables exist — expected.
+3. **Variables** tab of the new service:
+   - `DATABASE_URL` = `${{Postgres.DATABASE_URL}}` — the reference works
+     as-is; no `sslmode` parameter is needed on Railway's internal network.
+   - `NETWORK` = `testnet` (or `mainnet`, plus `RPC_URLS`)
+   - `ADMIN_TOKEN` = a random string, 16+ characters (`openssl rand -hex 24`)
+   - `HTTP_BASIC_AUTH` = `user:password` — set it if you will give the
+     service a public domain (next step). Skip it if only other services
+     in the same project will reach it over private networking.
+4. **Settings → Deploy → Healthcheck Path**: `/health`. Not `/ready`,
+   which returns 503 while catching up and would fail the deploy.
+5. **Settings → Networking → Generate Domain**, and when asked for the
+   port, answer **`8080`**. Sierpe listens on its own `HTTP_PORT`
+   (default 8080) and ignores Railway's injected `PORT`. Private
+   networking stays on by default: other services in the project reach
+   it at `http://sierpe.railway.internal:8080`.
+6. Deploy, then open `https://YOUR-APP.up.railway.app/status`. A fresh
+   database starts at the current tip, so `ready` flips to `true` within
+   seconds — history arrives per contract, through the backfill.
+
+No volume is needed on the Sierpe service: all state lives in Postgres.
+The `-full` image is the one exception — it wants a few GB of scratch
+disk for captive core; see [the archive leg](/docs/archive-leg/).
+
+## AWS (ECS Fargate + RDS)
+
+The shape a small team would run: one Fargate task, a managed Postgres,
+nothing public.
+
+- **RDS for PostgreSQL 16**, private subnets, not publicly accessible.
+  Create an empty database and a role that **owns** it
+  (`CREATE ROLE sierpe LOGIN PASSWORD '…'; CREATE DATABASE sierpe OWNER sierpe;`).
+  Owner is enough — Sierpe runs its own migrations; it never needs
+  superuser.
+- **`DATABASE_URL` must end in `?sslmode=require`.** RDS enforces TLS by
+  default on PostgreSQL 15+, and the compose file's `sslmode=disable` is
+  for the bundled local Postgres only. Use `require`, not `verify-full`:
+  the image carries the public root CAs (it talks HTTPS to the RPC) but
+  not Amazon's RDS CA, so full verification would fail. This applies to
+  every managed Postgres with a private CA (RDS, Supabase, Neon…).
+- **Task definition**: image `ghcr.io/zkcaleb-dev/sierpe:v1.5.1`,
+  container port `8080`, `NETWORK` as plain environment, `DATABASE_URL`
+  and `ADMIN_TOKEN` as ECS `secrets` from Secrets Manager. 0.5 vCPU /
+  1 GiB is a sound start (see sizing below). No volume, no EFS. Use the
+  `awslogs` driver; logs are structured JSON with secrets redacted.
+- **Health**: the image is distroless (no shell, no curl), so use the
+  load balancer's target-group check, not a container `CMD` check.
+  Path `/health`, success code 200. **Never `/ready`** here — it returns
+  503 while catching up, and an ECS health check on it would kill a
+  healthy task mid-backfill.
+- **Networking**: private subnets with a NAT gateway — the task needs
+  outbound HTTPS for the Stellar RPC and for the `ghcr.io` image pull.
+  An **internal** ALB gives your backend a stable name inside the VPC.
+  Only if you truly need a public endpoint: internet-facing ALB + ACM
+  certificate and set `HTTP_BASIC_AUTH`.
+- **Exactly one task**: `desiredCount: 1`, `minimumHealthyPercent: 0`,
+  `maximumPercent: 100`, so a deploy never runs two copies at once (why:
+  next section).
 
 ## Any container platform
 
@@ -99,6 +157,43 @@ docker run -d -p 8080:8080 \
   ghcr.io/zkcaleb-dev/sierpe:v1.5.1
 ```
 
+## Operating it on any cloud — the facts that matter
+
+Answers to what an operator (or their assistant) has to decide, stated
+from the code rather than guessed.
+
+- **Run exactly one instance per database.** Ingestion is a single
+  writer with no leader election. A second instance does not corrupt
+  anything — its first commit trips the hash-continuity guard and the
+  process exits loudly — but you get a crash loop, not high availability.
+  Restarts are safe at any moment: the cursor and the data commit in one
+  transaction, so a killed task resumes exactly where it stopped.
+- **Shutdown**: `SIGTERM` is handled; the HTTP server drains for up to
+  5 seconds and the loop stops between commits. First boot runs the
+  embedded migrations in well under a minute.
+- **Database connections**: pgx defaults — at most `max(4, CPUs)`
+  pooled connections. A `db.t4g.micro` or Railway's Postgres is fine.
+- **Memory**: the slim image idles at tens of MB. The ceiling is the
+  backfill, which buffers RPC responses of up to 64 MB each and shrinks
+  its batch when the network is busier than that; plan 512 MB, and
+  1 GiB if you register many contracts at once.
+- **TLS to Postgres**: `sslmode=require` for any managed provider with a
+  private CA; `disable` only for a Postgres on the same private network
+  that you control; `verify-full` only if you can mount the provider's
+  CA bundle (the image is distroless — building a derived image is the
+  way).
+- **Testnet resets**: when the network is reset (the tip jumps back by
+  millions of ledgers), the loop detects it and **stops with zero
+  writes** rather than mixing two chains. Recovery is deliberate and
+  manual: drop and recreate the empty database, redeploy, re-register
+  your contracts. Everything Sierpe holds is re-derivable from the chain.
+- **Defaults you do not need to set**: on testnet the RPC pool is
+  `https://soroban-testnet.stellar.org`; history archives default to the
+  SDF public archives on **both** networks. Mainnet has no free public
+  RPC, so `RPC_URLS` is required there.
+- **Behind a proxy**: TLS termination in front is fine. Path prefixes
+  are not — the embedded UI and the API assume they live at `/`.
+
 ## Configuration
 
 Boot configuration comes from environment variables; everything else
@@ -108,7 +203,7 @@ Boot configuration comes from environment variables; everything else
 |---|---|---|
 | `DATABASE_URL` | yes | Postgres connection string; Sierpe owns this database |
 | `NETWORK` | yes | `testnet` or `mainnet` |
-| `ADMIN_TOKEN` | yes | Bearer token for the admin surface; minimum entropy enforced at boot |
+| `ADMIN_TOKEN` | yes | Bearer token for the admin surface. At least 16 characters with 6 distinct ones, enforced at boot (`openssl rand -hex 24` is fine) |
 | `RPC_URLS` | mainnet | Comma-separated failover pool, in preference order; testnet defaults to the public SDF endpoint |
 | `HTTP_PORT` | no | API port, default 8080 |
 | `START_LEDGER` | no | First ledger for a fresh database (default: current tip) |

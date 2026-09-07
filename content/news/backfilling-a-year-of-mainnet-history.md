@@ -51,10 +51,12 @@ into its own event pipeline, and for that the decoded movement is not
 enough — it needs the original `ContractEvent` bytes. But a movement is
 usually emitted by a token contract nobody registered (USDC's SAC here),
 so there is no events row to join to and the raw event was unrecoverable
-from the database. The next release fixes that: movements store and serve
-the raw event XDR they were decoded from, captured at the only moment it
-exists in the pipeline. A small column, and exactly the difference
-between an indexer you can read and an indexer you can build on.
+from the database. [Sierpe 1.6.0](/news/sierpe-1-6-0-released/) fixes
+that: movements store and serve the raw event XDR they were decoded from,
+captured at the only moment it exists in the pipeline. A small column,
+and exactly the difference between an indexer you can read and an indexer
+you can build on. The same case surfaced the other 1.6.0 change —
+registering contracts whose instance already expired.
 
 A follow-up post will report the real numbers — replay throughput,
 download volume, wall-clock time, and whatever the equivalence proof has

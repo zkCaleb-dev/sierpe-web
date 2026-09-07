@@ -13,6 +13,13 @@ in the repository. This page is the map.
 | Method & path | Purpose |
 |---|---|
 | `POST /v1/contracts` | Register a contract (or reconcile an existing registration); classification and backfill start automatically |
+
+A contract whose instance is archived (TTL expired) registers too, as long
+as `kinds` is explicit: it classifies as `unknown` and the response says so
+in a `warnings` array, while its history is still reconstructed — an
+archived contract's past exists in the History Archives even when its
+instance does not. Without explicit kinds the 404 stands, because the
+kinds default is derived from the classification. *(Since 1.6.0.)*
 | `GET /v1/contracts/:id` | Detail: classification, discovered events, backfill progress, coverage |
 | `DELETE /v1/contracts/:id` | Stop indexing; data is kept, re-registration resumes |
 
@@ -64,8 +71,12 @@ mints to the contract, since a mint is value arriving too.
 
 Each row: `id` (shared by the two rows of a self-transfer — key on `id` + `role`), `role`, `transferType`, `tokenContractId`,
 `counterparty` (absent on mints and burns), `amount` (exact i128 in raw
-token units, as a string), `ledger`, `ledgerClosedAt`. The page carries
-the usual `cursor`, `scanStatus`, `coverage` and a `note`.
+token units, as a string), `rawXdr` (since 1.6.0: the base64
+`ContractEvent` the movement was decoded from — the emitting token is
+usually not registered, so this is the only place the original bytes
+exist; absent on rows ingested before the 1.6.0 migration), `ledger`,
+`ledgerClosedAt`. The page carries the usual `cursor`, `scanStatus`,
+`coverage` and a `note`.
 
 Because ingestion downloads whole ledgers, the descending backfill derives
 movement history from **before** the contract was registered — the thing

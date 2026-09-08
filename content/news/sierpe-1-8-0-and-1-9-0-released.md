@@ -1,6 +1,6 @@
 ---
 title: Sierpe 1.8.0 and 1.9.0 — the archive leg learns what deep healing actually costs
-date: 2026-09-08T19:00:00Z
+date: 2026-09-08T15:45:00Z
 summary: Staged registrations no longer multiply the archive replay, cursors enforce their kind, and heal chunks grow 50x after the pilot showed each one was re-downloading the full bucket set.
 ---
 

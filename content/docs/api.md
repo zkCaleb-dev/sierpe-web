@@ -108,7 +108,10 @@ Every paginated response carries:
 - **`scanStatus`** — `COMPLETE`, `HAS_MORE`, `WAITING_FOR_LEDGERS` or
   `OLDEST_REACHED`.
 - **`cursor`** — opaque, encodes the full query. Cursors are bound to
-  their endpoint and cannot drift across filters.
+  their endpoint and cannot drift across filters. Since 1.8.0 every
+  cursor — `/events` included — carries its kind and a cursor minted by
+  a different endpoint is rejected with 400; cursors minted before the
+  stamp remain valid.
 
 Event ids follow the `getEvents` format: `{toid}-{event_index}`,
 zero-padded, stable across replays.

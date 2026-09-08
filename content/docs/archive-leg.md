@@ -38,10 +38,18 @@ archive: off | unverified | verified | equivalence_failed
 
 ## How healing progresses
 
-Gaps are walked downward in atomic 2000-ledger chunks. Each chunk lowers
-the heal watermark on the gap row *and* the clamped backfill frontier in
-the same transaction — so **declared coverage grows exactly as fast as
-healed data lands**, never ahead of it.
+Gaps are walked downward in atomic chunks — 100,000 ledgers by default,
+`HEAL_CHUNK_LEDGERS` to tune. Each chunk lowers the heal watermark on
+the gap row *and* the clamped backfill frontier in the same transaction
+— so **declared coverage grows exactly as fast as healed data lands**,
+never ahead of it.
+
+The chunk size matters more than it looks: every chunk is a fresh
+captive core run that re-downloads the bucket set of its anchor
+checkpoint, a fixed multi-minute cost regardless of chunk length. Larger
+chunks amortize that download; the trade is memory (a chunk's records
+are held until its single commit) and replay work lost if the process
+dies mid-chunk. On a slow link healing a deep gap, raise it.
 
 Watch `sierpe_gaps_healed_total`, `sierpe_healed_ledgers_total` and
 `open_gaps` draining in `/status`.
@@ -59,6 +67,7 @@ docker pull ghcr.io/zkcaleb-dev/sierpe:v1.2.0-full
 | `STELLAR_CORE_BINARY` | Path to a stellar-core binary; enables the leg. Pre-set in `-full` |
 | `HISTORY_ARCHIVE_URLS` | Archives to replay from. Defaults to the SDF public archives |
 | `CAPTIVE_STORAGE_PATH` | Disposable scratch space for buckets. Defaults to the OS temp dir |
+| `HEAL_CHUNK_LEDGERS` | Ledgers per heal chunk (default 100000, min 64). Larger chunks amortize bucket downloads on deep heals |
 
 Before enabling it, know that:
 

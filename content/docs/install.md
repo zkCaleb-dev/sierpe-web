@@ -240,6 +240,7 @@ Boot configuration comes from environment variables; everything else
 | `STELLAR_CORE_BINARY` | no | Path to a stellar-core binary; enables the [archive leg](/docs/archive-leg/). Pre-set in the `-full` image |
 | `HISTORY_ARCHIVE_URLS` | no | History archives for the archive leg. Defaults to the SDF public archives |
 | `CAPTIVE_STORAGE_PATH` | no | Disposable scratch space for captive core buckets. Defaults to the OS temp dir |
+| `HEAL_CHUNK_LEDGERS` | no | Ledgers per atomic heal chunk (default 100000, min 64). Larger chunks amortize the per-chunk bucket download; raise on slow links healing deep gaps |
 
 Secrets are redacted from all logs. Verify the deployment with
 `GET /health` and `GET /status`; `/ready` returns 503 while catching up —

@@ -52,14 +52,60 @@ are held until its single commit) and replay work lost if the process
 dies mid-chunk. On a slow link healing a deep gap, raise it.
 
 Watch `sierpe_gaps_healed_total`, `sierpe_healed_ledgers_total` and
-`open_gaps` draining in `/status`.
+`gaps_pending_heal` draining in `/status`.
+
+## Sparse healing: replaying only where your contracts lived
+
+Replaying a deep gap in full is measured in days. On a real mainnet
+deployment the registered contracts had touched **0.15% of the ledgers**
+in the gap being healed — the rest was empty history being replayed at
+full price.
+
+`POST /v1/admin/gaps/plan` takes the ledger ranges you want replayed and
+splits every open gap into those ranges and the rest. The ranges you
+asked for stay with the healer; **the rest stay open and declared** — a
+deferred gap records a decision not to replay, never a claim that a
+range is empty. That is what makes the plan pure scheduling: if your
+plan is wrong you lose coverage, and Sierpe still never states that it
+indexed history it did not read.
+
+```bash
+curl -X POST https://your-instance/v1/admin/gaps/plan \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -d '{"replay": [{"from": 59146455, "to": 59152703}], "padding": 300}'
+```
+
+Where the plan comes from is your business: Sierpe never fetches one and
+has no oracle client, no credentials and no way to spend your money. A
+query against a public chain-data warehouse, another indexer, or a
+hand-written list all work. Send the ranges where you believe activity
+is; the server pads them and snaps them to checkpoint boundaries.
+
+Three things worth knowing before you plan:
+
+- **Include each contract's deployment ledger.** An instance creation is
+  a contract-data change that often carries no event, so an
+  events-only plan misses it. On the pilot's 1,285 contracts, 8.4% were
+  deployed in a ledger holding no event at all.
+- **A plan is only valid for the contracts it was computed from.**
+  Registering a contract therefore reopens every deferred gap covering
+  its history — the plan that deferred those ranges never looked for it.
+  Register your whole batch first, then plan.
+- **`open_gaps` stops reaching zero**, because deferred gaps stay open on
+  purpose. Use `gaps_pending_heal` (or
+  `sierpe_open_gaps - sierpe_deferred_gaps`) as the completion signal.
+
+`HEAL_WORKERS` replays several gaps at once, which is what a plan
+produces. Each worker is its own captive core, so budget roughly 10 GB
+per worker against the machine's **total** memory minus everything else
+it runs.
 
 ## Enabling it
 
 Deploy the `-full` tag; `STELLAR_CORE_BINARY` is pre-set:
 
 ```bash
-docker pull ghcr.io/zkcaleb-dev/sierpe:v1.2.0-full
+docker pull ghcr.io/zkcaleb-dev/sierpe:v1.10.0-full
 ```
 
 | Variable | Meaning |
@@ -67,6 +113,7 @@ docker pull ghcr.io/zkcaleb-dev/sierpe:v1.2.0-full
 | `STELLAR_CORE_BINARY` | Path to a stellar-core binary; enables the leg. Pre-set in `-full` |
 | `HISTORY_ARCHIVE_URLS` | Archives to replay from. Defaults to the SDF public archives |
 | `CAPTIVE_STORAGE_PATH` | Disposable scratch space for buckets. Defaults to the OS temp dir |
+| `HEAL_WORKERS` | Gaps replayed at once (default 1, max 16). Budget ~10 GB per worker against total machine memory |
 | `HEAL_CHUNK_LEDGERS` | Ledgers per heal chunk (default 100000, min 64). Larger chunks amortize bucket downloads on deep heals |
 
 Before enabling it, know that:

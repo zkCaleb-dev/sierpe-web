@@ -19,6 +19,14 @@ The headline signals:
   wall clock. Sustained growth means falling behind.
 - **`sierpe_open_gaps`** — unresolved coverage gaps. Any nonzero value is
   declared, unserved history.
+- **`sierpe_deferred_gaps`** / **`sierpe_deferred_ledgers`** — the share of
+  those gaps a [heal plan](/docs/archive-leg/) decided not to replay. They
+  rise on purpose when you apply a plan, so **`sierpe_open_gaps` stops
+  reaching zero**: anything watching `open_gaps == 0` for "history is
+  complete" then waits for a condition that can no longer happen, and waits
+  silently. The completion signal is `sierpe_open_gaps -
+  sierpe_deferred_gaps`, served ready-made as `gaps_pending_heal` in
+  `/status`. Instances that never apply a plan are unaffected.
 - **Suppression counters** — `sierpe_suppressed_txs_total`,
   `_events_`, `_transfers_`, `_trustlines_`. Anything Sierpe could not
   read is counted, never silently dropped. **Alert if nonzero**: that is

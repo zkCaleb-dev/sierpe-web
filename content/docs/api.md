@@ -13,6 +13,9 @@ in the repository. This page is the map.
 | Method & path | Purpose |
 |---|---|
 | `POST /v1/contracts` | Register a contract (or reconcile an existing registration); classification and backfill start automatically |
+| `POST /v1/admin/gaps/plan` | Plan which parts of the open gaps the archive leg replays; the rest stay open and declared ([sparse healing](/docs/archive-leg/)) |
+| `GET /v1/contracts/:id` | Detail: classification, discovered events, backfill progress, coverage |
+| `DELETE /v1/contracts/:id` | Stop indexing; data is kept, re-registration resumes |
 
 A contract whose instance is archived (TTL expired) registers too, as long
 as `kinds` is explicit: it classifies as `unknown` and the response says so
@@ -20,8 +23,6 @@ in a `warnings` array, while its history is still reconstructed — an
 archived contract's past exists in the History Archives even when its
 instance does not. Without explicit kinds the 404 stands, because the
 kinds default is derived from the classification. *(Since 1.6.0.)*
-| `GET /v1/contracts/:id` | Detail: classification, discovered events, backfill progress, coverage |
-| `DELETE /v1/contracts/:id` | Stop indexing; data is kept, re-registration resumes |
 
 ## Read surface
 

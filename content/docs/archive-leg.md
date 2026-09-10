@@ -105,7 +105,7 @@ it runs.
 Deploy the `-full` tag; `STELLAR_CORE_BINARY` is pre-set:
 
 ```bash
-docker pull ghcr.io/zkcaleb-dev/sierpe:v1.10.0-full
+docker pull ghcr.io/zkcaleb-dev/sierpe:v1.10.1-full
 ```
 
 | Variable | Meaning |

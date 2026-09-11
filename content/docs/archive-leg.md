@@ -81,7 +81,7 @@ query against a public chain-data warehouse, another indexer, or a
 hand-written list all work. Send the ranges where you believe activity
 is; the server pads them and snaps them to checkpoint boundaries.
 
-Three things worth knowing before you plan:
+Four things worth knowing before you plan:
 
 - **Include each contract's deployment ledger.** An instance creation is
   a contract-data change that often carries no event, so an
@@ -94,6 +94,16 @@ Three things worth knowing before you plan:
 - **`open_gaps` stops reaching zero**, because deferred gaps stay open on
   purpose. Use `gaps_pending_heal` (or
   `sierpe_open_gaps - sierpe_deferred_gaps`) as the completion signal.
+- **Replay the gaps directly below your contracts' clamp.** A clamped
+  registration's declared coverage descends only as the gap it is clamped
+  at heals, and a deferred gap never heals — so the first deferred gap
+  under the wall freezes `indexedFromLedger` there for good, however much
+  history is recovered below it. The ones to watch are the tiny ranges
+  recorded while the retention wall moved during a long walk: a few dozen
+  ledgers each, sitting right under the clamp, and exactly the ones worth
+  deferring to save a spin-up. Do not. The rows below would still land and
+  still be queryable, but the coverage your API reports would never move
+  again.
 
 `HEAL_WORKERS` replays several gaps at once, which is what a plan
 produces. Each worker is its own captive core, so budget roughly 10 GB
